@@ -18,3 +18,16 @@
    ```bash
    git clone <你的仓库地址>
    cd captcha-http-service
+2. **安装依赖**
+   ```bash
+   pip install -r requirements.txt
+3. **启动服务**
+   ```bash
+   # 默认端口8080
+   python server.py
+   # 指定端口
+   python server.py 9000
+4. **访问服务**
+   状态页面: http://localhost:8080
+   健康检查: http://localhost:8080/health
+   API接口: POST http://localhost:8080/recognize
