@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>验证码识别服务 - 文档 & 测试</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin: 0; padding: 0; color: #222; background: #f6f8fb; }
+    header { background: linear-gradient(90deg,#4b6cb7,#182848); color: #fff; padding: 24px; }
+    .container { max-width: 980px; margin: 24px auto; padding: 16px; }
+    h1 { margin: 0 0 6px 0; font-size: 20px; }
+    p.lead { margin: 6px 0 0 0; color: #e6eefc; }
+    .card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(23,31,60,0.06); }
+    pre { background: #0d1117; color: #c9d1d9; padding: 12px; border-radius: 6px; overflow: auto; font-size: 13px; }
+    label { display:block; margin: 8px 0 6px; font-weight:600; }
+    textarea, input[type="text"], input[type="file"], select { width: 100%; padding:8px; box-sizing:border-box; border:1px solid #d8e1ef; border-radius:6px; }
+    .row { display:flex; gap:16px; }
+    .col { flex:1; }
+    button { background:#2b7cff; color:#fff; border:none; padding:10px 14px; border-radius:6px; cursor:pointer; }
+    button.secondary { background:#6c757d; }
+    .result { white-space:pre-wrap; background:#0f1720; color:#e6eefc; padding:12px; border-radius:6px; margin-top:8px; }
+    .meta { font-size:13px; color:#6b7280; }
+    .flex { display:flex; gap:8px; align-items:center; }
+    .small { font-size:13px; color:#6b7280; }
+    .badge { display:inline-block; padding:4px 8px; background:#eef2ff; color:#312e81; border-radius:999px; font-weight:600; font-size:12px; }
+    footer { text-align:center; color:#9aa4bf; font-size:13px; padding:16px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>🔐 验证码识别服务 — 文档与在线测试</h1>
+      <p class="lead">说明接口用法、示例请求，并可直接在页面上传图片或粘贴 Base64 进行在线测试。</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>📡 API 概览</h2>
+      <p class="meta">主接口: <span class="badge">POST /recognize</span></p>
+      <h3>请求（JSON）</h3>
+      <pre>{
+  "base64": "字符串，支持包含 data:image/png;base64, 前缀 或 纯 base64"
+}</pre>
+      <h3>成功响应</h3>
+      <pre>{
+  "success": true,
+  "code": 200,
+  "message": "识别成功",
+  "request_id": "xxxx",
+  "data": {
+    "captcha": "AB12",
+    "time_ms": 120.45,
+    "length": 4
+  }
+}</pre>
+      <h3>错误响应</h3>
+      <pre>{
+  "success": false,
+  "code": 400,
+  "message": "错误信息",
+  "request_id": "xxxx",
+  "data": null
+}</pre>
+
+      <h3>示例 curl</h3>
+      <pre id="curl-example">curl -X POST ${ORIGIN}/recognize \
+  -H "Content-Type: application/json" \
+  -d '{"base64":"data:image/png;base64,iVBORw0K..."}'</pre>
+      <p class="small">注：页面下方有交互式测试，建议直接使用。</p>
+    </div>
+
+    <div class="card">
+      <h2>🧪 在线测试 (Try-It)</h2>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div>
+          <label>1) 选择本地图片文件 (PNG/JPEG)</label>
+          <input id="fileInput" type="file" accept="image/*" />
+          <div class="small" style="margin-top:6px;">或者</div>
+          <label style="margin-top:8px;">粘贴 Base64 (含或不含 data: 前缀)</label>
+          <textarea id="base64Input" rows="6" placeholder="data:image/png;base64,..." ></textarea>
+        </div>
+
+        <div>
+          <label>2) 请求设置</label>
+          <label>目标 URL</label>
+          <input id="targetUrl" type="text" value="" />
+          <label style="margin-top:8px;">Content-Type</label>
+          <input id="contentType" type="text" value="application/json" />
+          <div style="margin-top:8px;" class="flex">
+            <button id="sendBtn">发送请求</button>
+            <button id="clearBtn" class="secondary">清除</button>
+          </div>
+          <div class="small" style="margin-top:8px;">说明：若选择文件，页面会自动把图片转换为 data:image/...;base64, 并填入 Base64 文本框。</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label>3) 响应结果</label>
+        <div id="result" class="result">尚未请求</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>⚙️ 示例与注意事项</h2>
+      <ul>
+        <li>支持含 <code>data:image/png;base64,</code> 前缀或纯 Base64 字符串。</li>
+        <li>最大请求体大小受服务端限制（默认 10MB）。</li>
+        <li>若需要跨域从浏览器直接调用，请确保服务端设置允许的 Origin 或在同域下测试。</li>
+        <li>结果字段 <code>captcha</code> 只包含字母或数字（非字母数字字符会被过滤）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    验证码识别服务 • 在线文档与测试页面
+  </footer>
+
+  <script>
+    // Simple client-side logic to support Try-It
+    (function () {
+      const origin = window.location.origin || (window.location.protocol + '//' + window.location.host);
+      const curlEl = document.getElementById('curl-example');
+      curlEl.textContent = curlEl.textContent.replace('${ORIGIN}', origin);
+
+      const fileInput = document.getElementById('fileInput');
+      const base64Input = document.getElementById('base64Input');
+      const sendBtn = document.getElementById('sendBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const resultEl = document.getElementById('result');
+      const targetUrl = document.getElementById('targetUrl');
+
+      // default target
+      targetUrl.value = origin + '/recognize';
+
+      fileInput.addEventListener('change', async (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          // dataURL
+          base64Input.value = ev.target.result;
+        };
+        reader.readAsDataURL(f);
+      });
+
+      clearBtn.addEventListener('click', () => {
+        base64Input.value = '';
+        resultEl.textContent = '已清除';
+      });
+
+      sendBtn.addEventListener('click', async () => {
+        const url = targetUrl.value.trim();
+        if (!url) {
+          resultEl.textContent = '请填写目标 URL';
+          return;
+        }
+        let payloadBase64 = base64Input.value.trim();
+        if (!payloadBase64) {
+          resultEl.textContent = '请先选择图片或粘贴 Base64';
+          return;
+        }
+
+        // if user pasted plain base64 without data: prefix we still send as-is
+        const body = { base64: payloadBase64 };
+
+        resultEl.textContent = '请求中...';
+        sendBtn.disabled = true;
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          const txt = await res.text();
+          let pretty;
+          try {
+            pretty = JSON.stringify(JSON.parse(txt), null, 2);
+          } catch (e) {
+            pretty = txt;
+          }
+          resultEl.textContent = `HTTP ${res.status} ${res.statusText}\n\n${pretty}`;
+        } catch (err) {
+          resultEl.textContent = '请求失败: ' + String(err);
+        } finally {
+          sendBtn.disabled = false;
+        }
+      });
+
+      // Allow paste of images from clipboard in modern browsers
+      window.addEventListener('paste', async (e) => {
+        const items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+        for (let item of items) {
+          if (item.type.indexOf('image') !== -1) {
+            const blob = item.getAsFile();
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+              base64Input.value = ev.target.result;
+            };
+            reader.readAsDataURL(blob);
+            break;
+          }
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
